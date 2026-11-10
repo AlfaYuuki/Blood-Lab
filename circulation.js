@@ -32,15 +32,17 @@ function setMode(next){
 $('playFlow').addEventListener('click',()=>{
  playing=!playing;
  $('circulationTheater').classList.toggle('paused',!playing);
+ if(playing) $('circulationSvg').unpauseAnimations(); else $('circulationSvg').pauseAnimations();
  $('playFlow').textContent=playing?'Ⅱ Pause flow':'▶ Resume flow';
 });
 $('speedControl').addEventListener('change',e=>{
  speed=Number(e.target.value);
  $('circulationTheater').style.setProperty('--flow-speed',speed);
  $('circulationTheater').querySelectorAll('.flow-pulse').forEach(el=>el.style.animationDuration=(1.2/speed)+'s');
+ $('circulationSvg').querySelectorAll('animateMotion').forEach(el=>{const base=Number(el.dataset.base||parseFloat(el.getAttribute('dur')));el.dataset.base=base;el.setAttribute('dur',(base/speed)+'s')});
 });
 function reducedMotion(){return window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches}
-if(reducedMotion()){$('playFlow').textContent='▶ Start flow';playing=false;$('circulationTheater').classList.add('paused')}
+if(reducedMotion()){$('playFlow').textContent='▶ Start flow';playing=false;$('circulationTheater').classList.add('paused');$('circulationSvg').pauseAnimations()}
 setStage(0);
 
 const antigenSet=t=>({A:['A','AB'].includes(t.replace(/[+-]/g,'')),B:['B','AB'].includes(t.replace(/[+-]/g,'')),D:t.endsWith('+')});
