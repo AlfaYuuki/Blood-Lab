@@ -1,116 +1,33 @@
-# 🩸 Blood Lab
+# Blood Lab — Hematology Explorer
 
-**An interactive, browser-based learning simulator for human blood groups, transfusion compatibility, and immune responses.**
+An interactive, browser-based educational experience about human circulation, blood groups, red-cell antigens, antibodies and blood components.
 
-Blood Lab turns key concepts from blood science into an approachable visual learning experience. Explore the ABO and Rh(D) systems, run simplified red-blood-cell compatibility scenarios, inspect an animated illustration, and check your understanding with a short quiz.
+## Experience
+- **Blood journey:** animated red-cell markers move through an eight-stage schematic route: systemic veins, right atrium, right ventricle, lung capillaries, pulmonary veins, left heart, aorta/systemic arteries and tissue capillaries.
+- **Gas exchange:** oxygen and carbon-dioxide indicators change as the cell moves between lungs and body tissues.
+- **Transfusion lab:** select donor and recipient ABO/Rh(D) groups, optionally model pre-existing anti-D, and step through cell entry, antibody encounter, antigen recognition and possible immune effects.
+- **Blood groups:** profiles for all eight ABO/Rh(D) groups and a simplified red-cell teaching matrix.
+- **Blood science:** red cells, white cells, plasma, platelets and immune memory.
+- **Knowledge check:** five interactive questions.
+- Responsive layout, light/dark theme toggle, speed control and reduced-motion support.
 
-> [!IMPORTANT]
-> **Educational use only.** Blood Lab is a simplified teaching model, not a medical tool. It does not determine whether a real transfusion is safe. Real transfusion decisions require qualified healthcare professionals, laboratory testing, and clinical protocols.
+## Run
+Open `index.html` in a modern browser. No build tools, package installation, framework or external JavaScript library is required. The app uses three local files: `index.html`, `app.css` and `app.js`.
 
----
+## Important scientific limitations
+This is a schematic educational model, not a physiological simulator or medical device. Vessel paths and cell positions are illustrative and not to scale. The transfusion lab models selected ABO and Rh(D) red-cell concepts only. ABO incompatibility can cause a severe acute immune reaction. Anti-D sensitization and subsequent anti-D-mediated effects are biologically distinct and may be delayed; they are not represented as instant ABO-style agglutination. Real transfusion safety depends on clinical assessment, antibody screening, laboratory crossmatching and professional protocols. Never use this app to make a real transfusion or healthcare decision.
 
-## ✨ Features
-
-- **Transfusion simulator** — Select donor and recipient blood groups and view a simplified compatibility report.
-- **Visual model** — Explore an animated illustration of red blood cells, antigens, antibodies, and antibody binding.
-- **ABO system guide** — Learn about A and B antigens and the antibodies commonly associated with each ABO group.
-- **Rh(D) system guide** — Understand the D antigen, Rh-positive and Rh-negative groups, and sensitization.
-- **Immune response overview** — Follow the high-level stages of antigen recognition, B-cell activation, antibody production, and immune memory.
-- **Blood science library** — Review the roles of red blood cells, white blood cells, plasma, and platelets.
-- **Knowledge quiz** — Test your understanding with five multiple-choice questions.
-- **Responsive interface** — Use the app on desktop or mobile, with light and dark themes based on your device preference.
-- **No build step** — The project runs directly in a modern web browser.
-
-## 🚀 Getting Started
-
-### Requirements
-
-- A modern web browser with JavaScript enabled.
-- Git, if you want to clone the repository.
-
-There are no package installations, frameworks, or external runtime dependencies.
-
-### Run locally
-
-1. Clone the repository:
-
-   ```bash
-   git clone https://github.com/AlfaYuuki/Blood-Lab.git
-   ```
-
-2. Open the project folder:
-
-   ```bash
-   cd Blood-Lab
-   ```
-
-3. Open `index.html` in your browser.
-
-You can also use a local static-file server if you prefer. No compilation or build command is required.
-
-## 🧭 Using the Simulator
-
-1. Open the **Simulator** tab.
-2. Choose a donor blood type and a recipient blood type.
-3. Optionally select the sensitization setting to model a recipient who has previously developed anti-D antibodies.
-4. Select **Run transfusion simulation**.
-5. Review the visual model, compatibility checks, and explanatory report.
-6. Use **Replay** to run the selected scenario again or **Reset** to restore the default selections.
-
-Explore the other tabs to learn about ABO groups, Rh(D), immune responses, and the components of blood. Finish with the **Quiz** to review what you learned.
-
-## 🧬 What the Model Covers
-
-### ABO blood groups
-
-The simulator represents the A and B antigens on red blood cells and the corresponding naturally occurring ABO antibodies commonly found in plasma.
-
-### Rh(D) blood groups
-
-The simulator represents the presence or absence of the D antigen. Its optional sensitization setting illustrates why anti-D antibodies may matter when an Rh-negative recipient has previously been exposed to D-positive red blood cells.
-
-### Model limitations
-
-The simulator focuses on selected ABO and Rh(D) concepts. It does not model every blood-group antigen, antibody, clinical factor, or transfusion-testing procedure. Its visual effects are explanatory illustrations, not biological measurements or predictions.
-
-**Do not use its results to choose donors, recipients, or make healthcare decisions.**
-
-## 🗂️ Project Structure
-
-```text
+## Project structure
+```
 Blood-Lab/
-├── index.html   # Complete application: layout, styling, simulator logic, and quiz
-└── README.md    # Project documentation
+├── index.html   # Semantic application structure
+├── app.css      # Complete responsive interface and animations
+├── app.js       # Circulation, transfusion, navigation and quiz logic
+└── README.md    # Documentation
 ```
 
-The app is intentionally lightweight: its HTML, CSS, and JavaScript are contained in a single file.
+## Technology
+HTML5, CSS3, vanilla JavaScript and inline SVG. No build step or runtime dependency.
 
-## 🛠️ Built With
-
-- **HTML5** — Application structure
-- **CSS3** — Responsive layout, themes, and animations
-- **Vanilla JavaScript** — Simulator logic, navigation, visual updates, and quiz
-- **Inline SVG** — Red-blood-cell and immune-interaction illustration
-
-## 🤝 Contributing
-
-Ideas, bug reports, and improvements are welcome.
-
-1. Fork the repository.
-2. Create a branch for your change.
-3. Make your changes and test the app in a modern browser.
-4. Open a pull request describing what changed and why.
-
-For changes to scientific explanations or compatibility logic, include reliable references and keep the educational limitations clear.
-
-## 📄 License
-
-No license file is currently included in this repository. Unless a license is added, the default copyright rules apply; reuse and redistribution are not automatically permitted.
-
----
-
-<p align="center">
-  Made for curious minds exploring the science of blood. 🧪
-  <br>
-  <sub>Blood Lab · Educational simulator · Not for clinical use</sub>
-</p>
+## License
+No license file is included. Unless a license is added, default copyright rules apply.
