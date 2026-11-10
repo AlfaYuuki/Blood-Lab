@@ -1,82 +1,65 @@
-/* Blood Lab 3.0 — Circulation Theater controller */
+/* Blood Lab 3.1 — animated circulation + immune interaction engine */
 (()=>{
-const $=id=>document.getElementById(id);
-if(!$('circulationTheater')) return;
-let playing=true, speed=1, stage=0, mode='flow';
+'use strict';
+const $=id=>document.getElementById(id), theater=$('circulationTheater'),svg=$('circulationSvg');
+if(!theater||!svg)return;
+let playing=true,stage=0,mode='flow',reactionStep=0,reactionTimer=null;
 const stages=[
-{title:'1 · The heart pumps',body:'The right side of the heart sends oxygen-poor blood toward the lungs. The left side receives oxygen-rich blood from the lungs and pumps it out to the body. Valves help keep flow moving in one direction.'},
-{title:'2 · Gas exchange in the lungs',body:'In tiny lung capillaries, oxygen diffuses from the air spaces into the blood and binds reversibly to hemoglobin inside red blood cells. Carbon dioxide moves from blood toward the lungs to be exhaled.'},
-{title:'3 · Delivery to body tissues',body:'As blood passes through systemic capillaries, oxygen leaves hemoglobin and diffuses into nearby tissues. Carbon dioxide produced by cells enters the blood. The red cells continue through veins back toward the heart.'},
-{title:'4 · The loop repeats',body:'Blood returns to the right side of the heart and the pulmonary circuit begins again. This continuous circulation transports gases and supports the body; it is not a one-way trip from heart to toes.'}
+['1 · The heart pumps','The right side of the heart sends oxygen-poor blood to the lungs. Blood returning from the lungs enters the left side, which pumps it into systemic circulation. Valves help maintain one-way flow.'],
+['2 · Gas exchange in the lungs','In pulmonary capillaries, oxygen diffuses from the air spaces into blood and binds reversibly to hemoglobin. Carbon dioxide moves from blood toward the air spaces and is exhaled.'],
+['3 · Delivery to body tissues','In systemic capillaries, oxygen is released from hemoglobin and diffuses into nearby cells. Carbon dioxide produced by tissues enters the blood across thin capillary walls.'],
+['4 · Return and repeat','Blood travels through veins back to the right side of the heart. Pulmonary and systemic circuits work continuously as one connected loop.']
 ];
-function setStage(i){
- stage=(i+4)%4;
- document.querySelectorAll('.stage-btn').forEach((b,n)=>b.classList.toggle('active',n===stage));
- $('stageTitle').textContent=stages[stage].title;
- $('stageBody').textContent=stages[stage].body;
- $('stageCounter').textContent='STAGE '+(stage+1)+' / 4';
- $('stageProgress').style.width=((stage+1)*25)+'%';
-}
+function setStage(i){stage=(i+4)%4;document.querySelectorAll('.stage-btn').forEach((b,n)=>b.classList.toggle('active',n===stage));$('stageTitle').textContent=stages[stage][0];$('stageBody').textContent=stages[stage][1];$('stageCounter').textContent='STAGE '+(stage+1)+' / 4';$('stageProgress').style.width=((stage+1)*25)+'%';}
 document.querySelectorAll('.stage-btn').forEach((b,i)=>b.addEventListener('click',()=>setStage(i)));
-$('nextStage').addEventListener('click',()=>setStage(stage+1));
-$('prevStage').addEventListener('click',()=>setStage(stage-1));
+$('nextStage').addEventListener('click',()=>setStage(stage+1));$('prevStage').addEventListener('click',()=>setStage(stage-1));
+function setMode(next){mode=next;$('flowPanel').classList.toggle('hidden',next!=='flow');$('transfusionPanel').classList.toggle('active',next==='transfusion');$('flowMode').classList.toggle('primary',next==='flow');$('transfusionMode').classList.toggle('primary',next==='transfusion');}
 $('flowMode').addEventListener('click',()=>setMode('flow'));
-$('transfusionMode').addEventListener('click',()=>{setMode('transfusion');renderTransfusion()});
-function setMode(next){
- mode=next;
- $('flowPanel').classList.toggle('hidden',next!=='flow');
- $('transfusionPanel').classList.toggle('active',next==='transfusion');
- $('flowMode').classList.toggle('primary',next==='flow');
- $('transfusionMode').classList.toggle('primary',next==='transfusion');
-}
-$('playFlow').addEventListener('click',()=>{
- playing=!playing;
- $('circulationTheater').classList.toggle('paused',!playing);
- if(playing) $('circulationSvg').unpauseAnimations(); else $('circulationSvg').pauseAnimations();
- $('playFlow').textContent=playing?'Ⅱ Pause flow':'▶ Resume flow';
-});
-$('speedControl').addEventListener('change',e=>{
- speed=Number(e.target.value);
- $('circulationTheater').style.setProperty('--flow-speed',speed);
- $('circulationTheater').querySelectorAll('.flow-pulse').forEach(el=>el.style.animationDuration=(1.2/speed)+'s');
- $('circulationSvg').querySelectorAll('animateMotion').forEach(el=>{const base=Number(el.dataset.base||parseFloat(el.getAttribute('dur')));el.dataset.base=base;el.setAttribute('dur',(base/speed)+'s')});
-});
-function reducedMotion(){return window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches}
-if(reducedMotion()){$('playFlow').textContent='▶ Start flow';playing=false;$('circulationTheater').classList.add('paused');$('circulationSvg').pauseAnimations()}
+$('transfusionMode').addEventListener('click',()=>{setMode('transfusion');renderTransfusion();});
+$('playFlow').addEventListener('click',()=>{playing=!playing;theater.classList.toggle('paused',!playing);if(playing)svg.unpauseAnimations?.();else svg.pauseAnimations?.();$('playFlow').textContent=playing?'Ⅱ Pause flow':'▶ Resume flow';});
+$('speedControl').addEventListener('change',e=>{const sp=Number(e.target.value);theater.querySelectorAll('.flow-pulse').forEach(el=>el.style.animationDuration=(1.2/sp)+'s');svg.querySelectorAll('animateMotion').forEach(el=>{const base=Number(el.dataset.base||parseFloat(el.getAttribute('dur'))||5);el.dataset.base=base;el.setAttribute('dur',(base/sp)+'s');});});
+if(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches){playing=false;theater.classList.add('paused');svg.pauseAnimations?.();$('playFlow').textContent='▶ Start flow';}
 setStage(0);
-
-const antigenSet=t=>({A:['A','AB'].includes(t.replace(/[+-]/g,'')),B:['B','AB'].includes(t.replace(/[+-]/g,'')),D:t.endsWith('+')});
-const plasmaSet=t=>({A:['B','O'].includes(t.replace(/[+-]/g,'')),B:['A','O'].includes(t.replace(/[+-]/g,''))});
+const panel=$('transfusionPanel');
+panel.insertAdjacentHTML('beforeend','<div class="reaction-console card"><div class="reaction-top"><div><div class="eyebrow">ANIMATED IMMUNE RESPONSE</div><h3>Watch the encounter, step by step</h3></div><span class="state" id="reactionState">READY</span></div><p class="card-sub">Follow the selected donor red cells as they encounter the recipient model antibodies. This separate teaching scene is not a literal recording of blood inside a patient.</p><div class="reaction-controls"><button class="btn primary" id="playReaction">▶ Play full sequence</button><button class="btn" id="nextReaction">Next event →</button><button class="btn" id="resetReaction">↺ Restart</button></div><div class="reaction-progress"><div id="reactionProgress"></div></div><div class="reaction-steps"><div class="reaction-step active"><b>01 · ENTRY</b><span>Cells enter the vessel</span></div><div class="reaction-step"><b>02 · ENCOUNTER</b><span>Antibodies approach</span></div><div class="reaction-step"><b>03 · RECOGNITION</b><span>Matching structures bind</span></div><div class="reaction-step"><b>04 · RESPONSE</b><span>Possible immune effects</span></div></div><div class="reaction-stage"><svg id="reactionSvg" viewBox="0 0 1000 330" role="img" aria-label="Animated educational diagram of red blood cells and antibody recognition"><defs><radialGradient id="rxCell"><stop stop-color="#ffadb0"/><stop offset=".58" stop-color="#e84f66"/><stop offset="1" stop-color="#8d2945"/></radialGradient></defs><rect x="18" y="38" width="964" height="252" rx="24" fill="#0b1723" stroke="#29435b"/><path d="M65 166H935" stroke="#4b2032" stroke-width="112" stroke-linecap="round"/><path d="M65 166H935" stroke="#d94e68" stroke-width="78" stroke-linecap="round" opacity=".2"/><path d="M65 166H935" stroke="#ff9aa5" stroke-width="2" stroke-dasharray="5 22" class="reaction-stream"/><g id="reactionCells"></g><g id="reactionAntibodies"></g><g id="reactionLinks"></g><g id="reactionParticles"></g><text x="70" y="82" fill="#a9bdcf" font-size="13" font-weight="700">DONOR RED CELLS</text><text x="930" y="82" text-anchor="end" fill="#a9bdcf" font-size="13" font-weight="700">RECIPIENT PLASMA</text><text x="500" y="266" text-anchor="middle" fill="#91a4b8" font-size="12" id="reactionSvgCaption">Press play to follow the sequence</text></svg></div><div class="reaction-narration" aria-live="polite"><span class="eyebrow" id="reactionEvent">EVENT 01</span><h4 id="reactionTitle">Cells enter the vessel</h4><p id="reactionBody">The donor red cells move through the illustrated vessel. Their surface antigens are carried on the cell membrane.</p></div></div>');
+const colors={A:'#72a9ff',B:'#6fe0a1',D:'#c18bff'};
+const sequence=[
+['EVENT 01','Donor cells enter the model vessel','Red blood cells travel with fluid flow. A, B and D antigens, when present, are displayed on the red-cell surface. Nothing has bound yet.','FLOW · RED CELLS CARRY THEIR SURFACE ANTIGENS'],
+['EVENT 02','Recipient antibodies are present in plasma','The recipient profile determines which antibodies are represented. Antibodies move through plasma and can encounter a matching antigen. Only selected ABO and optional anti-D antibodies are shown.','ENCOUNTER · ANTIBODIES MOVE THROUGH PLASMA'],
+['EVENT 03','Specific antigen recognition','When an antibody meets its matching target, it can bind. ABO antibody binding may connect red cells; anti-D recognition is shown as antibody binding to D-positive cells.','RECOGNITION · MATCHING ANTIGEN AND ANTIBODY'],
+['EVENT 04','The model explains possible immune effects','An incompatible transfusion can cause a serious immune-mediated reaction. ABO incompatibility can lead to red-cell clumping and destruction. Anti-D effects may be delayed. This animation does not predict an individual outcome.','RESPONSE · EDUCATIONAL CONSEQUENCE, NOT A PATIENT PREDICTION']
+];
+function scenario(){const d=$('donor').value,r=$('recipient').value,s=$('sensitized').checked,abo=t=>t.replace(/[+-]/g,''),da={A:['A','AB'].includes(abo(d)),B:['B','AB'].includes(abo(d)),D:d.endsWith('+')},ra={A:['B','O'].includes(abo(r)),B:['A','O'].includes(abo(r))},aboBad=(da.A&&ra.A)||(da.B&&ra.B),antiD=r.endsWith('-')&&s&&da.D,rhRisk=r.endsWith('-')&&da.D&&!s;return{d,r,s,da,ra,aboBad,antiD,rhRisk,keys:['A','B','D'].filter(k=>da[k]),antibodies:[...(ra.A?['anti-A']:[]),...(ra.B?['anti-B']:[]),...(r.endsWith('-')&&s?['anti-D']:[])]};}
+function antigen(x,y,key){const c=colors[key];return '<g><path d="M'+x+' '+y+'v-19" stroke="'+c+'" stroke-width="5" stroke-linecap="round"/><circle cx="'+x+'" cy="'+(y-23)+'" r="7" fill="'+c+'"/><text x="'+x+'" y="'+(y-20)+'" fill="#07111c" font-size="8" text-anchor="middle" font-weight="900">'+key+'</text></g>';}
+function cell(x,y,keys,index){let marks=keys.map((k,i)=>antigen(x+[-28,0,28][i%3],y-38,k)).join('');return '<g class="rx-cell" style="--delay:'+(index*.22)+'s"><ellipse cx="'+x+'" cy="'+y+'" rx="54" ry="34" fill="url(#rxCell)" stroke="#ffadb0" stroke-width="2"/><ellipse cx="'+x+'" cy="'+y+'" rx="22" ry="10" fill="#8d2945" opacity=".55"/>'+marks+'</g>';}
+function stopSequence(){if(reactionTimer){clearInterval(reactionTimer);reactionTimer=null;}$('playReaction').textContent='▶ Play full sequence';}
+function drawReaction(step){
+ reactionStep=Math.max(0,Math.min(3,step));const q=scenario(),cells=$('reactionCells'),abs=$('reactionAntibodies'),links=$('reactionLinks'),parts=$('reactionParticles');
+ cells.innerHTML=cell(235,165,q.keys,0)+cell(365,165,q.keys,1)+(reactionStep>=3&&q.aboBad?cell(495,165,q.keys,2):'');
+ abs.innerHTML=reactionStep>=1?q.antibodies.map((label,i)=>{let x=620+i*90,y=130+(i%2)*66;return '<g class="rx-antibody" transform="translate('+x+' '+y+')"><path d="M0 22V0L-17 -18M0 0L17 -18" fill="none" stroke="#f4c36a" stroke-width="7" stroke-linecap="round"/><circle r="4" cy="-19" fill="#ffe2a0"/><text x="0" y="43" fill="#f4c36a" text-anchor="middle" font-size="11">'+label+'</text></g>';}).join(''):'';
+ links.innerHTML=reactionStep>=2&&(q.aboBad||q.antiD)?'<g class="rx-binding"><path d="M570 140Q600 100 630 130M570 190Q610 245 660 195" fill="none" stroke="#ffd47c" stroke-width="4" stroke-dasharray="6 5"/><circle cx="570" cy="140" r="13" fill="none" stroke="#ff7484" stroke-width="4"/><circle cx="660" cy="195" r="13" fill="none" stroke="#ff7484" stroke-width="4"/></g>':'';
+ parts.innerHTML=reactionStep>=3&&q.aboBad?Array.from({length:8},(_,i)=>'<circle class="rx-fragment" cx="'+(470+(i%4)*23)+'" cy="'+(100+Math.floor(i/4)*125)+'" r="5" fill="#ff8b99" style="--delay:'+(i*.08)+'s"/>').join(''):'';
+ if(reactionStep>=3&&q.aboBad)cells.innerHTML=cell(245,165,q.keys,0)+cell(330,145,q.keys,1)+cell(330,190,q.keys,2)+cell(415,165,q.keys,3);
+ const item=sequence[reactionStep];$('reactionEvent').textContent=item[0];$('reactionTitle').textContent=item[1];let body=item[2];
+ if(reactionStep>=1&&!q.antibodies.length)body='No ABO antibodies or optional anti-D are selected in this recipient profile. No matching antibody is shown. '+body;
+ if(reactionStep>=2&&!q.aboBad&&!q.antiD)body='For this selected pair, the simplified model finds no matching ABO antibody or selected anti-D target. '+body;
+ if(reactionStep>=3){if(q.aboBad)body='The ABO mismatch flag is active: the illustration clusters cells to represent antibody-mediated agglutination. Red-cell destruction may follow in a serious reaction; this is conceptual, not a literal clinical sequence.';else if(q.antiD)body='Anti-D recognition is represented on the D-positive red-cell surface. Rh immune effects may be delayed; this is not depicted as instant ABO-style clumping.';else if(q.rhRisk)body='No anti-D is selected, so immediate anti-D binding is not shown. D-positive exposure may lead to sensitization later; this is an exposure-risk illustration, not an acute reaction.';else body='No ABO/Rh(D) conflict is represented for this selected pair. Real compatibility still requires laboratory testing and professional assessment.';}
+ $('reactionBody').textContent=body;$('reactionSvgCaption').textContent=item[3];$('reactionProgress').style.width=((reactionStep+1)*25)+'%';document.querySelectorAll('.reaction-step').forEach((el,i)=>el.classList.toggle('active',i===reactionStep));$('reactionState').textContent=['FLOW','ENCOUNTER','BINDING','RESPONSE'][reactionStep];$('nextReaction').textContent=reactionStep===3?'↺ Back to start':'Next event →';
+}
+function playSequence(){stopSequence();if(reactionStep===3)drawReaction(0);$('playReaction').textContent='Ⅱ Pause sequence';reactionTimer=setInterval(()=>{if(reactionStep>=3){stopSequence();return;}drawReaction(reactionStep+1);},2600);}
+$('playReaction').addEventListener('click',()=>reactionTimer?stopSequence():playSequence());
+$('nextReaction').addEventListener('click',()=>{stopSequence();drawReaction(reactionStep===3?0:reactionStep+1);});
+$('resetReaction').addEventListener('click',()=>{stopSequence();drawReaction(0);});
+document.querySelectorAll('.reaction-step').forEach((el,i)=>el.addEventListener('click',()=>{stopSequence();drawReaction(i);}));
 function renderTransfusion(){
- const d=$('donor').value,r=$('recipient').value,s=$('sensitized').checked;
- const da=antigenSet(d),ra=plasmaSet(r);
- const aboBad=(da.A&&ra.A)||(da.B&&ra.B);
- const antiD=r.endsWith('-')&&s&&da.D;
- const antibodyLabels=[];if(ra.A)antibodyLabels.push('anti-A');if(ra.B)antibodyLabels.push('anti-B');if(r.endsWith('-')&&s)antibodyLabels.push('anti-D');
- const yShapes=antibodyLabels.map((label,i)=>{const x=455+i*45;return '<g transform="translate('+x+' 112)"><path d="M0 18V0L-13 -14M0 0L13 -14" fill="none" stroke="#f4c36a" stroke-width="6" stroke-linecap="round"/><text x="0" y="38" text-anchor="middle" fill="#f4c36a" font-size="10">'+label+'</text></g>'}).join('');
- const rhRisk=r.endsWith('-')&&da.D;
- const status=aboBad?'ABO antigen–antibody mismatch':antiD?'Anti-D recognition is represented':rhRisk?'D-positive exposure risk (no anti-D selected)':'No ABO/Rh(D) conflict represented';
- $('transfusionSummary').textContent=d+' donor red cells → '+r+' recipient · '+status+'.';
- $('transfusionStatus').textContent=aboBad||antiD?'RECOGNITION MODELLED':rhRisk?'EXPOSURE RISK':'NO MODELLED CONFLICT';
- $('transfusionStatus').className='state '+(aboBad||antiD?'bad':rhRisk?'warn':'good');
- $('transfusionExplanation').textContent=aboBad?'The selected donor red-cell antigens match an ABO antibody expected in the recipient plasma. The glowing contact markers represent antigen–antibody recognition in a simplified teaching illustration.':antiD?'The recipient is set as previously sensitized and the donor red cells carry D antigen. The highlighted binding represents anti-D recognition.':rhRisk?'No anti-D is selected, so the illustration does not claim an immediate anti-D reaction. D-positive exposure can lead to sensitization; this is generally not preferred for an Rh-negative recipient.':'This selected pair has no ABO or Rh(D) conflict represented by this limited model. Real compatibility still requires laboratory testing and professional assessment.';
- $('transfusionScene').innerHTML=
- '<defs><radialGradient id="txRbc"><stop stop-color="#ff9e9f"/><stop offset=".6" stop-color="#e44d66"/><stop offset="1" stop-color="#922b48"/></radialGradient></defs>'+
- '<rect x="24" y="30" width="952" height="310" rx="24" fill="#101d2a" stroke="#29435b"/>'+
- '<path d="M75 190H925" stroke="#6c263d" stroke-width="88" stroke-linecap="round" opacity=".55"/>'+
- '<path d="M75 190H925" stroke="#d84b64" stroke-width="60" stroke-linecap="round" opacity=".22"/>'+
- '<path d="M75 190H925" stroke="#ff8290" stroke-width="3" stroke-dasharray="4 20" class="flow-pulse"/>'+
- '<g transform="translate(250 190)"><ellipse rx="78" ry="48" fill="url(#txRbc)" stroke="#ff9ea5" stroke-width="2"/><ellipse rx="32" ry="15" fill="#8d2b44" opacity=".55"/>'+
- (da.A?'<path d="M-42 -40v-18" stroke="#72a9ff" stroke-width="5"/><circle cx="-42" cy="-60" r="7" fill="#72a9ff"/>':'')+
- (da.B?'<path d="M0 -47v-18" stroke="#6fe0a1" stroke-width="5"/><circle cy="-68" r="7" fill="#6fe0a1"/>':'')+
- (da.D?'<path d="M42 -40v-18" stroke="#c18bff" stroke-width="5"/><circle cx="42" cy="-60" r="7" fill="#c18bff"/>':'')+
- '</g>'+
- '<g transform="translate(730 190)"><ellipse rx="78" ry="48" fill="url(#txRbc)" stroke="#ff9ea5" stroke-width="2"/><ellipse rx="32" ry="15" fill="#8d2b44" opacity=".55"/></g>'+
- '<text x="250" y="285" text-anchor="middle" fill="#e3edf7" font-size="14" font-weight="800">DONOR RBC · '+d+'</text><text x="730" y="285" text-anchor="middle" fill="#e3edf7" font-size="14" font-weight="800">RECIPIENT BLOOD · '+r+'</text>'+
- '<text x="500" y="75" text-anchor="middle" fill="#9fb3c7" font-size="13">SIMPLIFIED MICROSCOPIC VIEW · NOT TO SCALE</text>'+
- (aboBad||antiD?'<g class="reaction-burst"><circle cx="490" cy="190" r="40" fill="none" stroke="#ff6f7d" stroke-width="5" stroke-dasharray="5 7"/><path d="M490 139v-22m0 146v-22m-51-51h-22m146 0h-22m-87-36-16-16m104 104-16-16m0-72 16-16m-104 104 16-16" stroke="#ff8994" stroke-width="5" stroke-linecap="round"/></g><text x="500" y="130" text-anchor="middle" fill="#ff9aa4" font-size="12" font-weight="800">ANTIBODY RECOGNITION</text>':rhRisk?'<g class="clot-particle"><circle cx="500" cy="190" r="25" fill="none" stroke="#f4c36a" stroke-width="3" stroke-dasharray="4 6"/></g><text x="500" y="130" text-anchor="middle" fill="#f4c36a" font-size="12" font-weight="800">POTENTIAL SENSITIZATION RISK</text>':'<circle cx="500" cy="190" r="22" fill="none" stroke="#6fe0a1" stroke-width="3"/><path d="m489 190 8 8 15-18" fill="none" stroke="#6fe0a1" stroke-width="4" stroke-linecap="round"/>')+
- '<text x="500" y="320" text-anchor="middle" fill="#9fb3c7" font-size="11">Illustrative recognition marker — not a prediction of a real patient outcome</text>';
+ const q=scenario(),d=q.d,r=q.r,aboBad=q.aboBad,antiD=q.antiD,rhRisk=q.rhRisk;
+ const status=aboBad?'ABO antigen–antibody mismatch':antiD?'Anti-D recognition represented':rhRisk?'D-positive exposure risk':'No ABO/Rh(D) conflict represented';
+ $('transfusionSummary').textContent=d+' donor red cells → '+r+' recipient · '+status+'.';$('transfusionStatus').textContent=aboBad||antiD?'RECOGNITION MODELLED':rhRisk?'EXPOSURE RISK':'NO MODELLED CONFLICT';$('transfusionStatus').className='state '+(aboBad||antiD?'bad':rhRisk?'warn':'good');
+ $('transfusionExplanation').textContent=aboBad?'Donor red cells carry an A or B antigen corresponding to an antibody expected in recipient plasma. The reaction sequence demonstrates recognition and possible cell clumping.':antiD?'The recipient is modelled as previously sensitized and has anti-D while donor cells carry D antigen. Rh immune effects are not necessarily immediate.':rhRisk?'Donor cells carry D antigen and the recipient is Rh-negative. No anti-D is selected, so immediate binding is not shown; exposure may lead to sensitization.':'No ABO/Rh(D) conflict is represented in this limited model. Clinical compatibility requires additional testing.';
+ $('transfusionScene').innerHTML='<defs><radialGradient id="txRbc"><stop stop-color="#ff9e9f"/><stop offset=".6" stop-color="#e44d66"/><stop offset="1" stop-color="#922b48"/></radialGradient></defs><rect x="24" y="30" width="952" height="310" rx="24" fill="#101d2a" stroke="#29435b"/><path d="M75 190H925" stroke="#6c263d" stroke-width="88" stroke-linecap="round" opacity=".55"/><path d="M75 190H925" stroke="#d84b64" stroke-width="60" stroke-linecap="round" opacity=".22"/><path d="M75 190H925" stroke="#ff8290" stroke-width="3" stroke-dasharray="4 20" class="flow-pulse"/><g transform="translate(250 190)"><ellipse rx="78" ry="48" fill="url(#txRbc)" stroke="#ff9ea5" stroke-width="2"/><ellipse rx="32" ry="15" fill="#8d2b44" opacity=".55"/>'+(q.da.A?'<path d="M-42 -40v-18" stroke="#72a9ff" stroke-width="5"/><circle cx="-42" cy="-60" r="7" fill="#72a9ff"/>':'')+(q.da.B?'<path d="M0 -47v-18" stroke="#6fe0a1" stroke-width="5"/><circle cy="-68" r="7" fill="#6fe0a1"/>':'')+(q.da.D?'<path d="M42 -40v-18" stroke="#c18bff" stroke-width="5"/><circle cx="42" cy="-60" r="7" fill="#c18bff"/>':'')+'</g><g transform="translate(730 190)"><ellipse rx="78" ry="48" fill="url(#txRbc)" stroke="#ff9ea5" stroke-width="2"/><ellipse rx="32" ry="15" fill="#8d2b44" opacity=".55"/></g><text x="250" y="285" text-anchor="middle" fill="#e3edf7" font-size="14" font-weight="800">DONOR RBC · '+d+'</text><text x="730" y="285" text-anchor="middle" fill="#e3edf7" font-size="14" font-weight="800">RECIPIENT BLOOD · '+r+'</text><text x="500" y="75" text-anchor="middle" fill="#9fb3c7" font-size="13">SIMPLIFIED MICROSCOPIC VIEW · NOT TO SCALE</text>'+(aboBad||antiD?'<g class="reaction-burst"><circle cx="490" cy="190" r="40" fill="none" stroke="#ff6f7d" stroke-width="5" stroke-dasharray="5 7"/></g><text x="500" y="130" text-anchor="middle" fill="#ff9aa4" font-size="12" font-weight="800">ANTIBODY RECOGNITION</text>':rhRisk?'<g class="clot-particle"><circle cx="500" cy="190" r="25" fill="none" stroke="#f4c36a" stroke-width="3" stroke-dasharray="4 6"/></g><text x="500" y="130" text-anchor="middle" fill="#f4c36a" font-size="12" font-weight="800">POTENTIAL SENSITIZATION RISK</text>':'<circle cx="500" cy="190" r="22" fill="none" stroke="#6fe0a1" stroke-width="3"/><path d="m489 190 8 8 15-18" fill="none" stroke="#6fe0a1" stroke-width="4" stroke-linecap="round"/>')+'<text x="500" y="320" text-anchor="middle" fill="#9fb3c7" font-size="11">Illustrative marker — not a prediction of a real patient outcome</text>';
+ stopSequence();drawReaction(0);
 }
 $('refreshTransfusion').addEventListener('click',renderTransfusion);
-['donor','recipient','sensitized'].forEach(id=>$(id).addEventListener('change',()=>{if(mode==='transfusion')renderTransfusion()}));
+['donor','recipient','sensitized'].forEach(id=>$(id).addEventListener('change',()=>{if(mode==='transfusion')renderTransfusion();}));
+renderTransfusion();
 })();
