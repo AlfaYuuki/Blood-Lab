@@ -43,3 +43,5 @@
 @media(prefers-reduced-motion:reduce){.flow-pulse,.reaction-burst,.clot-particle{animation:none!important}}
 
 #circulationTheater.paused .flow-pulse{animation-play-state:paused}
+
+.theater-toolbar .btn.primary{width:auto}
