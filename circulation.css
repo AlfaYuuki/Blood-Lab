@@ -41,3 +41,5 @@
 @keyframes floatClot{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
 @media(max-width:760px){.theater-lower{grid-template-columns:1fr}.stage-list{grid-template-columns:repeat(2,1fr)}.theater-svg{min-height:220px}.fact-strip{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){.flow-pulse,.reaction-burst,.clot-particle{animation:none!important}}
+
+#circulationTheater.paused .flow-pulse{animation-play-state:paused}
