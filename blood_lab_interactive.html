@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blood Lab — Interactive Science Simulator</title>
+<style>
+:root{color-scheme:light dark;--bg:#fff;--text:#20242b;--muted:#68717d;--card:#fff;--panel:#f3f5f8;--border:#dce1e8;--accent:#2459a6;--accent-bg:#e7effb}
+@media(prefers-color-scheme:dark){:root{--bg:#15181d;--text:#edf0f5;--muted:#aab2bf;--card:#20252c;--panel:#292f38;--border:#3b424d;--accent:#8ab4f8;--accent-bg:#26384f}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+main{max-width:900px;margin:auto;padding:20px 16px 40px}.header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}.brand{font-size:24px;font-weight:800;letter-spacing:.3px}.subtitle,.muted{color:var(--muted)}.subtitle{font-size:13px}.version,.pill{font-size:11px;border:1px solid var(--border);border-radius:30px;padding:5px 9px;white-space:nowrap;background:var(--panel)}
+nav{display:flex;gap:7px;overflow-x:auto;padding-bottom:10px;margin-bottom:8px}button,select{font:inherit;color:var(--text);background:var(--panel);border:1px solid var(--border);border-radius:9px;padding:9px 11px;cursor:pointer}button:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}button.active{background:var(--accent-bg);border-color:var(--accent);font-weight:700}.tab{font-size:12px;white-space:nowrap}.primary{background:var(--accent);color:white;border:0;font-weight:700;width:100%;margin-top:12px}.panel{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin:0 0 12px}.panel h2{font-size:19px;margin:0 0 5px}.panel h3{font-size:16px;margin:0}.small{font-size:12px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.types{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.types button{font-weight:700;padding:10px 4px}.field label{display:block;font-size:13px;font-weight:650}.field select{display:block;width:100%;margin-top:5px}.check{display:flex;gap:8px;align-items:flex-start;font-size:12px;margin-top:12px}.result{background:var(--panel);border-radius:11px;padding:12px;margin-top:12px}.statusrow{display:flex;justify-content:space-between;gap:10px;font-size:12px;margin:12px 0 5px}.meter{height:7px;background:var(--border);border-radius:20px;overflow:hidden}.meter>div{height:100%;width:0;background:var(--accent);transition:width .35s}.actions{display:flex;gap:8px;margin-top:10px}.actions button{flex:1;font-size:12px}.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--muted);margin-top:8px}.microscope{width:100%;height:auto;display:block;background:#9e2633; background:color-mix(in srgb,#9e2633 9%,var(--card));border-radius:12px}.hidden{display:none!important}.list{padding-left:20px;color:var(--muted);font-size:14px}.list li{margin:7px 0}.infoitem{display:flex;gap:12px;align-items:flex-start}.emoji{font-size:28px}.footer{border-top:1px solid var(--border);padding-top:13px;text-align:center;color:var(--muted);font-size:11px;margin-top:16px}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}@keyframes pulse{0%,100%{opacity:.6}50%{opacity:1}}.particle{animation:float 2.6s ease-in-out infinite}.clump{animation:pulse 1.4s ease-in-out infinite}
+@media(max-width:520px){main{padding:14px 11px 30px}.brand{font-size:21px}.version{font-size:9px}.panel{padding:12px}.types{gap:6px}.types button{font-size:13px;padding:9px 2px}}
+</style>
+</head>
+<body>
+<main id="bloodlab">
+ <header class="header"><div><div class="brand">🩸 BLOOD LAB</div><div class="subtitle">Explore the science inside human blood</div></div><span class="version">VERSION 1.0 · LEARNING</span></header>
+ <nav id="nav">
+  <button class="tab active" data-page="sim">🔬 Simulator</button><button class="tab" data-page="abo">ABO System</button><button class="tab" data-page="rh">Rh System</button><button class="tab" data-page="immune">Immunity</button><button class="tab" data-page="learn">Blood Science</button><button class="tab" data-page="quiz">🧠 Quiz</button>
+ </nav>
+ <section id="page-sim">
+  <div class="panel"><h3>01 / Transfusion experiment</h3><p class="small muted">Choose a donor and recipient. Observe donor red blood cells interacting with antibodies in the recipient's plasma.</p>
+   <div class="grid">
+    <div class="field"><label for="donor">Donor blood type</label><select id="donor"><option>O-</option><option>O+</option><option>A-</option><option>A+</option><option>B-</option><option>B+</option><option>AB-</option><option>AB+</option></select></div>
+    <div class="field"><label for="recipient">Recipient blood type</label><select id="recipient"><option>AB+</option><option>AB-</option><option>O-</option><option>O+</option><option>A-</option><option>A+</option><option>B-</option><option>B+</option></select></div>
+   </div>
+   <label class="check"><input id="sensitized" type="checkbox"> Recipient has previously developed anti-D antibodies (sensitized Rh-negative recipient).</label>
+   <button id="run" class="primary">▶ Run transfusion simulation</button>
+  </div>
+  <div class="panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h3>02 / Microscopic observation</h3><span class="pill" id="stage">READY</span></div>
+   <svg id="microscope" class="microscope" viewBox="0 0 340 210" role="img" aria-label="Illustration of red blood cells, antigens and antibodies">
+    <defs><radialGradient id="cellgrad"><stop offset="0" stop-color="#f28b88"/><stop offset=".55" stop-color="#dc4752"/><stop offset="1" stop-color="#9e2537"/></radialGradient></defs>
+    <g class="particle"><ellipse cx="86" cy="103" rx="43" ry="34" fill="url(#cellgrad)" stroke="#9e2537" stroke-width="2"/><ellipse cx="86" cy="103" rx="19" ry="10" fill="#9e2537" opacity=".4"/></g>
+    <g class="particle" style="animation-delay:-1s"><ellipse cx="248" cy="102" rx="43" ry="34" fill="url(#cellgrad)" stroke="#9e2537" stroke-width="2"/><ellipse cx="248" cy="102" rx="19" ry="10" fill="#9e2537" opacity=".4"/></g>
+    <g id="markers"></g><g id="antibodies"></g><g id="clumps"></g>
+    <text x="86" y="158" text-anchor="middle" font-size="10" fill="currentColor">DONOR RBC</text><text x="248" y="158" text-anchor="middle" font-size="10" fill="currentColor">RECIPIENT PLASMA</text><text x="170" y="192" text-anchor="middle" font-size="10" fill="currentColor" id="visualLabel">Awaiting experiment...</text>
+   </svg>
+   <div class="legend"><span>🔵 A antigen</span><span>🟢 B antigen</span><span>🟣 D antigen</span><span>🟡 Y-shaped antibody</span></div>
+   <div class="actions"><button id="replay">↻ Replay</button><button id="clear">Reset</button></div>
+  </div>
+  <div class="panel"><h3>03 / Immune reaction report</h3><div id="report" class="result" aria-live="polite">Select blood types and run an experiment to receive your laboratory report.</div>
+   <h3 style="margin-top:15px">Compatibility checks</h3>
+   <div class="statusrow"><span>ABO system</span><b id="aboStatus">Not tested</b></div><div class="meter"><div id="aboMeter"></div></div>
+   <div class="statusrow"><span>Rh(D) system</span><b id="rhStatus">Not tested</b></div><div class="meter"><div id="rhMeter"></div></div>
+  </div>
+  <div class="panel"><h3>What is happening?</h3><ol class="list"><li>Donor red blood cells enter the recipient's circulation.</li><li>Recipient antibodies may recognize matching donor antigens.</li><li>Antibodies can bind to red blood cell antigens.</li><li>Incompatible transfusions can cause agglutination and red blood cell destruction (hemolysis).</li></ol></div>
+ </section>
+ <section id="page-abo" class="hidden">
+  <div class="panel"><h2>ABO Blood Group System</h2><p class="small muted">Four groups determined by A and B antigens on red blood cells.</p></div>
+  <div class="grid">
+   <div class="panel"><h3>Group A</h3><p>🔵 A antigen</p><p class="small muted">Anti-B antibodies</p></div><div class="panel"><h3>Group B</h3><p>🟢 B antigen</p><p class="small muted">Anti-A antibodies</p></div>
+   <div class="panel"><h3>Group AB</h3><p>🔵 A + 🟢 B</p><p class="small muted">Neither anti-A nor anti-B</p></div><div class="panel"><h3>Group O</h3><p>No A or B antigens</p><p class="small muted">Anti-A + Anti-B</p></div>
+  </div>
+  <div class="panel"><h3>Why does a reaction occur?</h3><p class="small muted">For example, an A-group recipient normally has anti-B antibodies. If B-antigen-bearing red blood cells enter their bloodstream, those antibodies can bind to the B antigens, potentially causing a dangerous transfusion reaction.</p></div>
+ </section>
+ <section id="page-rh" class="hidden">
+  <div class="panel"><h2>Rh(D) Blood Group System</h2><p class="small muted">A separate antigen system from ABO.</p></div>
+  <div class="grid"><div class="panel"><h3>Rh-positive (+)</h3><div class="emoji">🟣</div><p class="small muted">D antigen present</p></div><div class="panel"><h3>Rh-negative (−)</h3><div class="emoji">⚪</div><p class="small muted">D antigen absent</p></div></div>
+  <div class="panel"><h3>Why isn't anti-D naturally present?</h3><p class="small muted">Anti-D usually develops after exposure to D-positive red blood cells, such as through transfusion or pregnancy. An Rh-negative person can become sensitized and develop immune memory.</p></div>
+  <div class="panel"><h3>Important: Rh-negative does not mean immune to D</h3><p class="small muted">It means their own red blood cells lack the D antigen. Their immune system can still recognize D as foreign following exposure.</p></div>
+ </section>
+ <section id="page-immune" class="hidden">
+  <div class="panel"><h2>Adaptive Immune Response</h2><p class="small muted">How your body develops a specific antibody response.</p></div>
+  <div class="panel">
+   <div class="infoitem"><span class="emoji">🔍</span><div><b>1. Recognition</b><p class="small muted">An immune cell recognizes a foreign antigen.</p></div></div><hr><div class="infoitem"><span class="emoji">⚡</span><div><b>2. Activation</b><p class="small muted">Appropriate B cells receive activation signals.</p></div></div><hr><div class="infoitem"><span class="emoji">🧬</span><div><b>3. Clonal expansion</b><p class="small muted">The activated B cells multiply.</p></div></div><hr><div class="infoitem"><span class="emoji">🏭</span><div><b>4. Antibody production</b><p class="small muted">Plasma cells produce antigen-specific antibodies.</p></div></div><hr><div class="infoitem"><span class="emoji">🧠</span><div><b>5. Immune memory</b><p class="small muted">Memory B cells can support a faster response to future exposure.</p></div></div>
+  </div>
+  <div class="panel"><h3>Cybersecurity analogy</h3><p class="small muted">Foreign antigen = unfamiliar intruder. Immune recognition = threat detection. Antibodies = specialized defensive tools. Memory B cells = retained threat knowledge.</p></div>
+ </section>
+ <section id="page-learn" class="hidden">
+  <div class="panel"><h2>Blood Science Library</h2><p class="small muted">Explore the major components of human blood.</p></div>
+  <div class="panel infoitem"><span class="emoji">🔴</span><div><b>Red blood cells</b><p class="small muted">Carry oxygen using hemoglobin. Their membranes carry blood-group antigens.</p></div></div>
+  <div class="panel infoitem"><span class="emoji">⚪</span><div><b>White blood cells</b><p class="small muted">Participate in immune defense, including lymphocytes that recognize antigens.</p></div></div>
+  <div class="panel infoitem"><span class="emoji">🟡</span><div><b>Plasma</b><p class="small muted">The liquid part of blood, transporting proteins, nutrients, hormones and antibodies.</p></div></div>
+  <div class="panel infoitem"><span class="emoji">🟠</span><div><b>Platelets</b><p class="small muted">Help form blood clots to control bleeding.</p></div></div>
+  <div class="panel"><h3>Other important concepts</h3><ul class="list"><li>Hemoglobin and oxygen transport</li><li>Blood clotting and coagulation</li><li>Antigens and antibodies</li><li>Blood typing and crossmatching</li><li>Hemolysis and agglutination</li><li>Hemolytic disease of the fetus and newborn</li><li>Plasma and platelet transfusions</li></ul></div>
+ </section>
+ <section id="page-quiz" class="hidden">
+  <div class="panel"><h2>🧠 Knowledge Check</h2><p class="small muted">Test your understanding of ABO and Rh compatibility.</p></div>
+  <div class="panel" id="quizContent"></div><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span class="small muted" id="qprogress">Question 1 of 5</span><button id="nextQ" class="primary" style="width:auto;margin:0">Next →</button></div><p id="quizFeedback" aria-live="polite"></p>
+ </section>
+ <footer class="footer">BLOOD LAB · Educational model only · Not for clinical transfusion decisions</footer>
+</main>
+<script>
+(()=>{
+const root=document.getElementById('bloodlab');const $=id=>document.getElementById(id);
+const abo=g=>g.replace(/[+-]/g,'');const rh=g=>g.endsWith('+');
+const antigens=g=>({A:['A','AB'].includes(abo(g)),B:['B','AB'].includes(abo(g)),D:rh(g)});
+const antibodies=g=>({A:abo(g)==='B'||abo(g)==='O',B:abo(g)==='A'||abo(g)==='O'});
+let last=null,timer=null,quizIndex=0,answered=false,score=0;
+function compatible(d,r,sens){let da=antigens(d),ra=antibodies(r);let badA=(da.A&&ra.A)||(da.B&&ra.B),badD=da.D&&r.endsWith('-'),immuneD=badD&&sens;return{abo:!badA,rh:!immuneD,standard:!badA&&!badD,actual:!badA&&!immuneD,badA,badD,immuneD}}
+function marker(x,y,type){let colors={A:'#3d9be9',B:'#41b88c',D:'#bb8be8'};return `<g><path d="M ${x} ${y} l 0 -12" stroke="${colors[type]}" stroke-width="4" stroke-linecap="round"/><circle cx="${x}" cy="${y-14}" r="6" fill="${colors[type]}"/><text x="${x}" y="${y-12}" text-anchor="middle" font-size="7" fill="white" font-weight="bold">${type}</text></g>`}
+function antibody(x,y,type){return `<g transform="translate(${x} ${y})"><path d="M0 12 L0 0 L-8 -9 M0 0 L8 -9" fill="none" stroke="#e3ad40" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><text x="0" y="24" text-anchor="middle" font-size="8" fill="currentColor">${type}</text></g>`}
+function draw(reaction,stage){let d=$('donor').value,r=$('recipient').value,da=antigens(d),ra=antibodies(r),mk='',types=Object.keys(da).filter(k=>da[k]),pos=[[65,83],[87,69],[108,88]];types.forEach((t,i)=>mk+=marker(...pos[i],t));$('markers').innerHTML=mk;let ab='',at=Object.keys(ra).filter(k=>ra[k]).map(k=>k==='A'?'anti-A':'anti-B');if($('sensitized').checked&&r.endsWith('-'))at.push('anti-D');if(reaction)at=at.filter(k=>k==='anti-A'?da.A:k==='anti-B'?da.B:da.D);[[226,63],[260,61],[291,82]].slice(0,at.length).forEach((p,i)=>ab+=antibody(...p,at[i]));$('antibodies').innerHTML=ab;$('clumps').innerHTML=reaction?`<g class="clump"><circle cx="145" cy="89" r="12" fill="#e3ad40" opacity=".65"/><circle cx="166" cy="109" r="14" fill="#e3ad40" opacity=".55"/><circle cx="185" cy="81" r="10" fill="#e3ad40" opacity=".7"/><path d="M133 95 Q165 55 195 100" stroke="#e3ad40" stroke-width="3" fill="none" stroke-dasharray="4 4"/></g>`:'';$('stage').textContent=stage;$('visualLabel').textContent=reaction?'Antibody binding illustrated':'Antigens and plasma antibodies'}
+function run(){clearTimeout(timer);let d=$('donor').value,r=$('recipient').value,s=$('sensitized').checked,c=compatible(d,r,s);last={d,r,s,c};draw(false,'ANALYZING');$('report').innerHTML='<b>Scanning donor antigens...</b><br><span class="muted">Checking ABO and Rh(D) compatibility.</span>';$('aboStatus').textContent='Analyzing';$('rhStatus').textContent='Analyzing';timer=setTimeout(()=>{let mismatch=c.badA||c.immuneD;draw(mismatch,mismatch?'REACTION':'NO MODELLED BINDING');$('aboStatus').textContent=c.abo?'Compatible':'Incompatible';$('rhStatus').textContent=c.badD?(c.immuneD?'Anti-D detected':'Sensitization risk'):'Compatible';$('aboMeter').style.width=c.abo?'100%':'0%';$('rhMeter').style.width=c.immuneD?'0%':c.badD?'65%':'100%';if(c.badA){$('report').innerHTML='<b style="color:#d45b5b">⚠ ABO antigen–antibody incompatibility</b><p>Recipient plasma contains antibodies that can recognize donor A or B antigens. Antibody binding can cause agglutination and hemolysis.</p>'}else if(c.immuneD){$('report').innerHTML='<b style="color:#d45b5b">⚠ Anti-D recognition</b><p>The recipient has anti-D antibodies, which can bind to the donor D antigen. This can lead to red blood cell destruction.</p>'}else if(c.badD){$('report').innerHTML='<b style="color:#c58a31">⚠ Rh-incompatible under standard transfusion practice</b><p>The donor carries D antigen and the recipient is Rh-negative. No anti-D is selected in this model, so an immediate anti-D reaction is not assumed. Exposure can cause sensitization, which is why this pairing is generally avoided.</p>'}else{$('report').innerHTML='<b style="color:#249b69">✓ No ABO or Rh(D) incompatibility modelled</b><p>The selected recipient antibodies have no corresponding donor antigens to bind in this simplified simulation. Real transfusions still require clinical testing.</p>'}},850)}
+$('run').addEventListener('click',run);$('replay').addEventListener('click',()=>{if(last)run()});$('clear').addEventListener('click',()=>{clearTimeout(timer);last=null;$('donor').value='O-';$('recipient').value='AB+';$('sensitized').checked=false;$('stage').textContent='READY';$('report').textContent='Select blood types and run an experiment to receive your laboratory report.';$('aboStatus').textContent='Not tested';$('rhStatus').textContent='Not tested';$('aboMeter').style.width='0';$('rhMeter').style.width='0';draw(false,'READY')});
+document.querySelectorAll('#nav [data-page]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('#nav [data-page]').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('main section[id^="page-"]').forEach(p=>p.classList.toggle('hidden',p.id!=='page-'+b.dataset.page))}));
+const questions=[['Which antigens are present on O− red blood cells?',['A and B','D only','None of A, B and D','A, B and D'],2,'O− lacks A, B and D antigens.'],['What does the plus sign in O+ mean?',['A antigen','B antigen','D antigen','Anti-D antibody'],2,'The plus indicates the presence of D antigen.'],['Which antibodies are normally present in group O plasma?',['Anti-A only','Anti-B only','Anti-A and anti-B','Neither'],2,'Group O normally has both ABO antibodies.'],['Why does anti-D usually develop after exposure?',['It is an acquired immune response','It is part of hemoglobin','Every person has it at birth','It is an A antigen'],0,'Anti-D is generally an immune response following sensitization.'],['Why is O− the universal red blood cell donor type?',['It has all antigens','It lacks A, B and D antigens','It contains no plasma','It has anti-A antibodies on its cells'],1,'O− red cells lack the three major antigens considered in this model.']];
+function showQ(){let q=questions[quizIndex];answered=false;$('qprogress').textContent=`Question ${quizIndex+1} of ${questions.length}`;$('quizContent').innerHTML='<b>'+q[0]+'</b><div class="grid" style="margin-top:12px">'+q[1].map((x,i)=>`<button style="text-align:left" data-answer="${i}">${String.fromCharCode(65+i)}. ${x}</button>`).join('')+'</div>';$('quizFeedback').textContent='';$('quizContent').querySelectorAll('[data-answer]').forEach(b=>b.addEventListener('click',()=>{if(answered)return;answered=true;let ok=Number(b.dataset.answer)===q[2];if(ok)score++;$('quizFeedback').innerHTML=(ok?'✓ Correct! ':'✗ Not quite. ')+q[3]+'<br><b>Score: '+score+'/'+questions.length+'</b>';b.classList.add('active')}));$('nextQ').textContent=quizIndex===questions.length-1?'Restart quiz':'Next →'}
+$('nextQ').addEventListener('click',()=>{if(quizIndex===questions.length-1){quizIndex=0;score=0}else quizIndex++;showQ()});showQ();draw(false,'READY');
+})();
+</script>
+</body></html>
