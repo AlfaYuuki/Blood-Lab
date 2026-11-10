@@ -52,6 +52,8 @@ function renderTransfusion(){
  const da=antigenSet(d),ra=plasmaSet(r);
  const aboBad=(da.A&&ra.A)||(da.B&&ra.B);
  const antiD=r.endsWith('-')&&s&&da.D;
+ const antibodyLabels=[];if(ra.A)antibodyLabels.push('anti-A');if(ra.B)antibodyLabels.push('anti-B');if(r.endsWith('-')&&s)antibodyLabels.push('anti-D');
+ const yShapes=antibodyLabels.map((label,i)=>{const x=455+i*45;return '<g transform="translate('+x+' 112)"><path d="M0 18V0L-13 -14M0 0L13 -14" fill="none" stroke="#f4c36a" stroke-width="6" stroke-linecap="round"/><text x="0" y="38" text-anchor="middle" fill="#f4c36a" font-size="10">'+label+'</text></g>'}).join('');
  const rhRisk=r.endsWith('-')&&da.D;
  const status=aboBad?'ABO antigen–antibody mismatch':antiD?'Anti-D recognition is represented':rhRisk?'D-positive exposure risk (no anti-D selected)':'No ABO/Rh(D) conflict represented';
  $('transfusionSummary').textContent=d+' donor red cells → '+r+' recipient · '+status+'.';
